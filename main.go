@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
+	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -36,6 +37,7 @@ const maxSpeed = 60
 var tickCounter = 0
 
 func (g *GameInfo) Draw(screen *ebiten.Image) {
+	screen.Clear()
 	for x := range g.width {
 		for y := range g.height {
 			if g.cells[x][y] == 1 {
@@ -140,31 +142,37 @@ func (g *GameInfo) CountPopulation() uint {
 // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 func (g *GameInfo) UpdatePopulation() error {
+	wg := sync.WaitGroup{}
 	for x := range g.width {
+		wg.Add(1)
+		go func() {
+			for y := range g.height {
 
-		for y := range g.height {
-			g.buffer[x][y] = 0
+				g.buffer[x][y] = 0
 
-			var neighbors uint8 = 0
-			for k := -1; k <= 1; k++ {
-				for m := -1; m <= 1; m++ {
-					if x+k >= 0 && x+k < g.width && y+m >= 0 && y+m < g.height {
-						neighbors += g.cells[x+k][y+m]
+				var neighbors uint8 = 0
+				for k := -1; k <= 1; k++ {
+					for m := -1; m <= 1; m++ {
+						if x+k >= 0 && x+k < g.width && y+m >= 0 && y+m < g.height {
+							neighbors += g.cells[x+k][y+m]
+						}
 					}
 				}
-			}
-			neighbors -= g.cells[x][y]
+				neighbors -= g.cells[x][y]
 
-			if g.cells[x][y] == 0 && neighbors == 3 {
-				g.buffer[x][y] = 1
-			} else if neighbors < 2 || neighbors > 3 {
-				g.buffer[x][y] = 0
-			} else {
-				g.buffer[x][y] = g.cells[x][y]
+				if g.cells[x][y] == 0 && neighbors == 3 {
+					g.buffer[x][y] = 1
+				} else if neighbors < 2 || neighbors > 3 {
+					g.buffer[x][y] = 0
+				} else {
+					g.buffer[x][y] = g.cells[x][y]
+				}
 			}
-		}
-
+			wg.Done()
+		}()
 	}
+	wg.Wait()
+
 	temp := g.buffer
 	g.buffer = g.cells
 	g.cells = temp
@@ -183,9 +191,9 @@ func main() {
 	flag.Parse()
 
 	g := &GameInfo{width: *width, height: *height, cellSize: *cellSize, variance: *variance, debug: *debug, lines: *lines, speed: *speed}
-	fmt.Println(g)
 	g.Init()
 	ebiten.SetWindowSize(g.width*g.cellSize, g.height*g.cellSize)
+	ebiten.SetWindowTitle("Conway's Game of Life")
 	ebiten.SetTPS(60)
 
 	if err := ebiten.RunGame(g); err != nil {
