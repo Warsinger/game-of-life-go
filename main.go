@@ -56,7 +56,7 @@ func (g *GameInfo) Draw(screen *ebiten.Image) {
 	}
 
 	if g.debug {
-		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v", g.generation, g.CountPopulation(), g.speed)
+		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v\n TPS %2.1f", g.generation, g.CountPopulation(), g.speed, ebiten.ActualTPS())
 		ebitenutil.DebugPrintAt(screen, str, 5, 5)
 	}
 }
@@ -77,6 +77,9 @@ func (g *GameInfo) Update() error {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
 		g.lines = !g.lines
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		ebiten.SetFullscreen(!ebiten.IsFullscreen())
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEqual) {
 		g.speed = (min(g.speed+5, maxSpeed))
@@ -184,7 +187,6 @@ func main() {
 	g.Init()
 	ebiten.SetWindowSize(g.width*g.cellSize, g.height*g.cellSize)
 	ebiten.SetTPS(60)
-	ebiten.SetFullscreen(true)
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
