@@ -15,12 +15,14 @@ import (
 )
 
 type GameInfo struct {
-	width      int
-	height     int
-	cellSize   int
-	variance   float64
+	width    int
+	height   int
+	cellSize int
+	variance float64
+	// TODO switch from 2d arrays to flat arrays
 	cells      [][]uint8
 	buffer     [][]uint8
+	pixels     []byte
 	generation int
 	speed      int
 	debug      bool
@@ -29,8 +31,6 @@ type GameInfo struct {
 
 var cellColor = color.RGBA{0, 255, 0, 255}
 
-// var cellColor = color.RGBA{255, 230, 120, 255}
-
 const minSpeed = 0
 const maxSpeed = 60
 
@@ -38,27 +38,33 @@ var tickCounter = 0
 
 func (g *GameInfo) Draw(screen *ebiten.Image) {
 	screen.Clear()
-	for x := range g.width {
-		for y := range g.height {
-			if g.cells[x][y] == 1 {
-				vector.DrawFilledRect(screen, float32(x*g.cellSize), float32(y*g.cellSize), float32(g.cellSize), float32(g.cellSize), cellColor, true)
+
+	size := screen.Bounds().Size()
+	if g.cellSize == 1 && len(g.pixels) == size.X*size.Y*4 {
+		// if size of cells is 1 then use pixel method to make images
+		screen.WritePixels(g.pixels)
+		// TODO fix bug with writing pixels in full screen mode
+	} else {
+		for x := range g.width {
+			for y := range g.height {
+				if g.cells[x][y] == 1 {
+					vector.DrawFilledRect(screen, float32(x*g.cellSize), float32(y*g.cellSize), float32(g.cellSize), float32(g.cellSize), cellColor, true)
+				}
+			}
+		}
+
+		if g.lines {
+			for i := 0; i <= size.Y; i += g.cellSize {
+				vector.StrokeLine(screen, 0, float32(i), float32(size.X), float32(i), 1, color.White, true)
+			}
+			for i := 0; i <= size.X; i += g.cellSize {
+				vector.StrokeLine(screen, float32(i), 0, float32(i), float32(size.Y), 1, color.White, true)
 			}
 		}
 	}
 
-	if g.lines {
-		size := screen.Bounds().Size()
-
-		for i := 0; i <= size.Y; i += g.cellSize {
-			vector.StrokeLine(screen, 0, float32(i), float32(size.X), float32(i), 1, color.White, true)
-		}
-		for i := 0; i <= size.X; i += g.cellSize {
-			vector.StrokeLine(screen, float32(i), 0, float32(i), float32(size.Y), 1, color.White, true)
-		}
-	}
-
 	if g.debug {
-		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v\n TPS %2.1f", g.generation, g.CountPopulation(), g.speed, ebiten.ActualTPS())
+		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v\nTPS %2.1f", g.generation, g.CountPopulation(), g.speed, ebiten.ActualTPS())
 		ebitenutil.DebugPrintAt(screen, str, 5, 5)
 	}
 }
@@ -82,6 +88,9 @@ func (g *GameInfo) Update() error {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		ebiten.SetFullscreen(!ebiten.IsFullscreen())
+		if !ebiten.IsFullscreen() {
+			ebiten.SetWindowSize(g.width*g.cellSize, g.height*g.cellSize)
+		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyEqual) {
 		g.speed = (min(g.speed+5, maxSpeed))
@@ -106,6 +115,7 @@ func (g *GameInfo) Update() error {
 func (g *GameInfo) Init() error {
 	g.cells = g.initArray(true)
 	g.buffer = g.initArray(false)
+	g.pixels = make([]byte, g.width*g.height*4)
 	g.generation = 0
 
 	return nil
@@ -148,8 +158,6 @@ func (g *GameInfo) UpdatePopulation() error {
 		go func() {
 			for y := range g.height {
 
-				g.buffer[x][y] = 0
-
 				var neighbors uint8 = 0
 				for k := -1; k <= 1; k++ {
 					for m := -1; m <= 1; m++ {
@@ -166,6 +174,17 @@ func (g *GameInfo) UpdatePopulation() error {
 					g.buffer[x][y] = 0
 				} else {
 					g.buffer[x][y] = g.cells[x][y]
+				}
+				if g.buffer[x][y] == 1 {
+					g.pixels[(y*g.width+x)*4] = cellColor.R
+					g.pixels[(y*g.width+x)*4+1] = cellColor.G
+					g.pixels[(y*g.width+x)*4+2] = cellColor.B
+					g.pixels[(y*g.width+x)*4+3] = cellColor.A
+				} else {
+					g.pixels[(y*g.width+x)*4] = 0
+					g.pixels[(y*g.width+x)*4+1] = 0
+					g.pixels[(y*g.width+x)*4+2] = 0
+					g.pixels[(y*g.width+x)*4+3] = 0
 				}
 			}
 			wg.Done()
