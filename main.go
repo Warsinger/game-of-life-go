@@ -6,7 +6,6 @@ import (
 	"image/color"
 	"log"
 	"math/rand"
-	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -15,15 +14,15 @@ import (
 )
 
 type GameInfo struct {
-	width    int
-	height   int
-	cellSize int
-	variance float64
-	// TODO switch from 2d arrays to flat arrays
-	cells      [][]uint8
-	buffer     [][]uint8
+	width      int
+	height     int
+	cellSize   int
+	variance   float64
+	cells      []bool
+	buffer     []bool
 	pixels     []byte
 	generation int
+	population int
 	speed      int
 	debug      bool
 	lines      bool
@@ -47,7 +46,7 @@ func (g *GameInfo) Draw(screen *ebiten.Image) {
 	} else {
 		for x := range g.width {
 			for y := range g.height {
-				if g.cells[x][y] == 1 {
+				if g.cells[y*g.width+x] {
 					vector.DrawFilledRect(screen, float32(x*g.cellSize), float32(y*g.cellSize), float32(g.cellSize), float32(g.cellSize), cellColor, true)
 				}
 			}
@@ -64,7 +63,7 @@ func (g *GameInfo) Draw(screen *ebiten.Image) {
 	}
 
 	if g.debug {
-		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v\nTPS %2.1f", g.generation, g.CountPopulation(), g.speed, ebiten.ActualTPS())
+		str := fmt.Sprintf("Generation %v\nPopulation %v\nSpeed %v\nTPS %2.1f", g.generation, g.population, g.speed, ebiten.ActualTPS())
 		ebitenutil.DebugPrintAt(screen, str, 5, 5)
 	}
 }
@@ -113,37 +112,21 @@ func (g *GameInfo) Update() error {
 }
 
 func (g *GameInfo) Init() error {
-	g.cells = g.initArray(true)
-	g.buffer = g.initArray(false)
+	g.cells = make([]bool, g.width*g.height)
+	g.randomData()
+	g.buffer = make([]bool, g.width*g.height)
 	g.pixels = make([]byte, g.width*g.height*4)
 	g.generation = 0
 
 	return nil
 }
 
-func (g *GameInfo) initArray(randomize bool) [][]uint8 {
-	grid := make([][]uint8, g.width)
-	for x := range grid {
-		grid[x] = make([]uint8, g.height)
-		if randomize {
-			for y := range g.height {
-				if rand.Float64() < g.variance {
-					grid[x][y] = 1
-				}
-			}
+func (g *GameInfo) randomData() {
+	for x := range g.cells {
+		if rand.Float64() < g.variance {
+			g.cells[x] = true
 		}
 	}
-	return grid
-}
-
-func (g *GameInfo) CountPopulation() uint {
-	var count uint = 0
-	for x := range g.width {
-		for y := range g.height {
-			count += uint(g.cells[x][y])
-		}
-	}
-	return count
 }
 
 // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
@@ -152,50 +135,58 @@ func (g *GameInfo) CountPopulation() uint {
 // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 func (g *GameInfo) UpdatePopulation() error {
-	wg := sync.WaitGroup{}
-	for x := range g.width {
-		wg.Add(1)
-		go func() {
-			for y := range g.height {
+	g.population = 0
+	for y := range g.height {
+		for x := range g.width {
 
-				var neighbors uint8 = 0
-				for k := -1; k <= 1; k++ {
-					for m := -1; m <= 1; m++ {
-						if x+k >= 0 && x+k < g.width && y+m >= 0 && y+m < g.height {
-							neighbors += g.cells[x+k][y+m]
-						}
-					}
-				}
-				neighbors -= g.cells[x][y]
+			neighbors := g.countNeighbors(x, y)
 
-				if g.cells[x][y] == 0 && neighbors == 3 {
-					g.buffer[x][y] = 1
-				} else if neighbors < 2 || neighbors > 3 {
-					g.buffer[x][y] = 0
-				} else {
-					g.buffer[x][y] = g.cells[x][y]
-				}
-				if g.buffer[x][y] == 1 {
-					g.pixels[(y*g.width+x)*4] = cellColor.R
-					g.pixels[(y*g.width+x)*4+1] = cellColor.G
-					g.pixels[(y*g.width+x)*4+2] = cellColor.B
-					g.pixels[(y*g.width+x)*4+3] = cellColor.A
-				} else {
-					g.pixels[(y*g.width+x)*4] = 0
-					g.pixels[(y*g.width+x)*4+1] = 0
-					g.pixels[(y*g.width+x)*4+2] = 0
-					g.pixels[(y*g.width+x)*4+3] = 0
-				}
+			idx := y*g.width + x
+			if !g.cells[idx] && neighbors == 3 {
+				g.buffer[idx] = true
+			} else if neighbors < 2 || neighbors > 3 {
+				g.buffer[idx] = false
+			} else {
+				g.buffer[idx] = g.cells[idx]
 			}
-			wg.Done()
-		}()
+			if g.buffer[idx] {
+				g.population++
+				g.pixels[idx*4] = cellColor.R
+				g.pixels[idx*4+1] = cellColor.G
+				g.pixels[idx*4+2] = cellColor.B
+				g.pixels[idx*4+3] = cellColor.A
+			} else {
+				g.pixels[idx*4] = 0
+				g.pixels[idx*4+1] = 0
+				g.pixels[idx*4+2] = 0
+				g.pixels[idx*4+3] = 0
+			}
+		}
 	}
-	wg.Wait()
-
 	temp := g.buffer
 	g.buffer = g.cells
 	g.cells = temp
 	return nil
+}
+
+func (g *GameInfo) countNeighbors(x, y int) uint8 {
+	var neighbors uint8 = 0
+	for k := -1; k <= 1; k++ {
+		for m := -1; m <= 1; m++ {
+			if k == 0 && m == 0 {
+				continue
+			}
+			x2 := x + m
+			y2 := y + k
+			if x2 < 0 || y2 < 0 || x2 >= g.width || y2 >= g.height {
+				continue
+			}
+			if g.cells[y2*g.width+x2] {
+				neighbors++
+			}
+		}
+	}
+	return neighbors
 }
 
 func main() {
