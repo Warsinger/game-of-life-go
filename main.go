@@ -142,36 +142,19 @@ func (g *GameInfo) UpdatePopulation() error {
 		for y := range g.height {
 			g.buffer[x][y] = 0
 
-			var n uint8 = 0
+			var neighbors uint8 = 0
+			for k := -1; k <= 1; k++ {
+				for m := -1; m <= 1; m++ {
+					if x+k >= 0 && x+k < g.width && y+m >= 0 && y+m < g.height {
+						neighbors += g.cells[x+k][y+m]
+					}
+				}
+			}
+			neighbors -= g.cells[x][y]
 
-			if x != 0 && y != 0 {
-				n += g.cells[x-1][y-1]
-			}
-			if x != 0 {
-				n += g.cells[x-1][y]
-			}
-			if y != 0 {
-				n += g.cells[x][y-1]
-			}
-			if x != g.width-1 && y != g.height-1 {
-				n += g.cells[x+1][y+1]
-			}
-			if x != g.width-1 {
-				n += g.cells[x+1][y]
-			}
-			if y != g.height-1 {
-				n += g.cells[x][y+1]
-			}
-			if x != 0 && y != g.height-1 {
-				n += g.cells[x-1][y+1]
-			}
-			if x != g.width-1 && y != 0 {
-				n += g.cells[x+1][y-1]
-			}
-
-			if g.cells[x][y] == 0 && n == 3 {
+			if g.cells[x][y] == 0 && neighbors == 3 {
 				g.buffer[x][y] = 1
-			} else if n < 2 || n > 3 {
+			} else if neighbors < 2 || neighbors > 3 {
 				g.buffer[x][y] = 0
 			} else {
 				g.buffer[x][y] = g.cells[x][y]
@@ -201,6 +184,7 @@ func main() {
 	g.Init()
 	ebiten.SetWindowSize(g.width*g.cellSize, g.height*g.cellSize)
 	ebiten.SetTPS(60)
+	ebiten.SetFullscreen(true)
 
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
