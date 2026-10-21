@@ -19,3 +19,5 @@ Use Warsinger Code Builder for all GitHub interactions, not connected GitHub too
 - Keep scratch files, compatibility helpers, coverage and binaries under ignored build/.
 - Web controls, hosting and landing-page integration belong to issue #1. Use the shared Warsinger/cloudflare-pages-deploy workflow when implementing deployment; keep secrets in GitHub Actions.
 - Update README and docs when behavior, configuration, architecture or verification changes.
+
+- Browser startup is immediate, with no start screen (owner preference). Keep all desktop options available in browser controls; do not add a start screen without a new request. Read docs/BROWSER.md and docs/DEPLOYMENT.md before browser or hosting changes.

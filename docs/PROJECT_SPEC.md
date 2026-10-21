@@ -2,7 +2,7 @@
 
 ## Purpose and current scope
 
-A desktop Conway's Game of Life sandbox written in Go/Ebitengine. A finite rectangular board has no edge wrapping: neighbors outside the board are dead. Live cells survive with two or three neighbors; dead cells are born with exactly three. All changes occur simultaneously.
+A desktop and browser Conway's Game of Life sandbox written in Go/Ebitengine. A finite rectangular board has no edge wrapping: neighbors outside the board are dead. Live cells survive with two or three neighbors; dead cells are born with exactly three. All changes occur simultaneously.
 
 Initialization and R restart generate an independent random board using the configured live-cell probability. Generation starts at zero; population and green RGBA pixels match the initial cells immediately. Restart resets tick timing. There is no persistence, multiplayer or editing interface.
 
@@ -28,3 +28,7 @@ Cells are green on black. One-pixel cells use a packed RGBA fast path when viewp
 ## Follow-up
 
 Issue #1 tracks the browser launcher, web controls for all command-line options, Cloudflare deployment and landing-page integration. A Wasm build alone does not complete that issue. Timing accuracy and one-pixel grid rendering can be evaluated separately without changing Conway's rules.
+
+## Web implementation
+
+The browser version uses the same simulation and drawing code with platform-specific query arguments, ready reporting and fixed logical board dimensions. The page launches immediately. All desktop flag values are exposed in validated settings; restart creates a fresh isolated iframe runtime. Rendering scales to the page while preserving the logical configuration. Browser Q is ignored. See BROWSER.md and DEPLOYMENT.md for implemented hosting and loader details; production verification and landing-page publication complete issue #1.

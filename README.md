@@ -50,8 +50,14 @@ A WebAssembly compilation check is also available:
 GOOS=js GOARCH=wasm go build -o build/game.wasm .
 ```
 
-In PowerShell, set `$env:GOOS = "js"` and `$env:GOARCH = "wasm"` before the build, then remove those environment variables afterward. This checks compatibility; the browser launcher and web controls are tracked separately in the web-version issue. Deterministic simulation tests run without a display. See [testing and manual checks](docs/TESTING.md), [project specification](docs/PROJECT_SPEC.md), [coding standards](docs/CODING_STANDARDS.md), and [agent workflow](AGENTS.md).
+In PowerShell, set `$env:GOOS = "js"` and `$env:GOARCH = "wasm"` before the build, then remove those environment variables afterward. This is the lower-level compilation check; the complete browser launcher is built with the command below. Deterministic simulation tests run without a display. See [testing and manual checks](docs/TESTING.md), [project specification](docs/PROJECT_SPEC.md), [coding standards](docs/CODING_STANDARDS.md), and [agent workflow](AGENTS.md).
 
 Board dimensions must be 1..4096 with at most 4,000,000 cells. Cell size must be positive and the initial viewport must fit within 8192 pixels in each dimension. Variance must be finite and in [0, 1]; speed must be 0..60. The historical tick scheduler makes speed approximate.
 
 Run the desktop app with `go run .`, or for example `go run . -width 100 -height 60 -cell 8 -variance 0.3`. Population and cells are initialized before the first step, including when paused.
+
+## Browser version
+
+Run `go run ./cmd/web -serve -port 8080` and open [localhost:8080](http://localhost:8080/). The game starts immediately; every command-line setting is also available on the page. Apply / restart creates a fresh run. The default board starts evolving randomly.
+
+The deployment target is [golgo.pages.dev](https://golgo.pages.dev/). See [browser behavior](docs/BROWSER.md) and [deployment/preview instructions](docs/DEPLOYMENT.md). Application icons are tracked separately in #8.

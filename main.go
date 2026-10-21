@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"game-of-life/internal/platform"
 	"game-of-life/internal/simulation"
 	"image/color"
 	"log"
@@ -33,7 +34,6 @@ func (g *GameInfo) Draw(screen *ebiten.Image) {
 	if g.cellSize == 1 && len(g.Pixels) == size.X*size.Y*4 {
 		// if size of cells is 1 then use pixel method to make images
 		screen.WritePixels(g.Pixels)
-		// TODO fix bug with writing pixels in full screen mode
 	} else {
 		for x := range g.width {
 			for y := range g.height {
@@ -60,11 +60,15 @@ func (g *GameInfo) Draw(screen *ebiten.Image) {
 }
 
 func (g *GameInfo) Layout(outsideWidth int, outsideHeight int) (screenWidth int, screenHeight int) {
+	if platform.Browser() {
+		return g.width * g.cellSize, g.height * g.cellSize
+	}
 	return outsideWidth, outsideHeight
 }
 
 func (g *GameInfo) Update() error {
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+	platform.Ready()
+	if !platform.Browser() && inpututil.IsKeyJustPressed(ebiten.KeyQ) {
 		return ebiten.Termination
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
@@ -115,7 +119,9 @@ func main() {
 	debug := flag.Bool("debug", false, "Show debug info, D to toggle in game")
 	lines := flag.Bool("lines", false, "Draw grid lines, L to toggle in game")
 
-	flag.Parse()
+	if err := flag.CommandLine.Parse(platform.Args()); err != nil {
+		log.Fatal(err)
+	}
 
 	g := &GameInfo{width: *width, height: *height, cellSize: *cellSize, variance: *variance, debug: *debug, lines: *lines, speed: *speed}
 	if err := g.Init(); err != nil {

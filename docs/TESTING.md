@@ -31,7 +31,7 @@ $env:GOARCH = 'wasm'
 try { go build -o build/game.wasm . } finally { Remove-Item Env:GOOS; Remove-Item Env:GOARCH }
 ```
 
-This is a compilation check, not a browser launcher or proof of interactive browser support. Native Linux packages importing Ebitengine also require graphics libraries and a display; use Xvfb when testing those packages on a headless Linux host. See the Ebitengine installation guide linked in README.
+This is the low-level compilation check; the complete browser launcher and browser-specific manual checks are documented in BROWSER.md. Native Linux packages importing Ebitengine also require graphics libraries and a display; use Xvfb when testing those packages on a headless Linux host. See the Ebitengine installation guide linked in README.
 
 ## Automated behavior
 
@@ -41,3 +41,7 @@ Tests cover block still life, blinker, glider motion, finite boundaries, all 512
 
 Run go run .; confirm random cells and population are visible immediately; try -cell 1 -speed 0 and verify initial pixels remain visible while paused; restart with R; toggle D and L; adjust speed with equals/minus; toggle fullscreen with F and restore; quit with Q. Check -variance 0 and 1; confirm invalid cell size, dimensions, speed and variance return clear errors. The one-pixel fast path does not draw grid lines. Rendering, fullscreen, keyboard input and visual scaling still need a real display check.
 
+
+## Browser checks
+
+Run `node --test scripts/*.test.mjs`, `go run ./cmd/web`, and `node scripts/package-pages.mjs <fresh-output-directory>`. CI uploads the complete Pages artifact after these pass. See BROWSER.md for the actual Chromium checks performed and remaining browser/touch coverage limits. Verify settings after restart, initial focus, graceful failed loading, gzip bundle startup, and that the preview URL appears on the PR and in the workflow summary.
