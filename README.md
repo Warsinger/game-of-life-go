@@ -8,9 +8,12 @@ Conway's Game of Life written in Golang for fun and learning
 * Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
 
 ## Controls
-* '+' or '-' to adjust game speed
-* D enable debug info printout
-* R restart the lifecycle
+* Equals/plus or minus to adjust nominal game speed (0 pauses)
+* D toggle debug information
+* R restart with a new random board
+* L toggle grid lines (except in the one-pixel fast path)
+* F toggle fullscreen
+* Q quit
 
 ## Command line args
 * -cell int
@@ -22,9 +25,9 @@ Conway's Game of Life written in Golang for fun and learning
 * -lines
   * Draw grid lines, L to toggle in game
 * -speed int
-  * Generations per second, min 0 max 60, + or - to adjust in game (default 15)
+  * Nominal speed, min 0 (pause) max 60, + or - to adjust in game (default 15)
 * -variance float
-  * Grid Size (default 0.5)
+  * Initial live-cell probability from 0 to 1 (default 0.5)
 * -width int
   * Board width in cells (default 80)
 ## Build and dependency verification
@@ -47,4 +50,8 @@ A WebAssembly compilation check is also available:
 GOOS=js GOARCH=wasm go build -o build/game.wasm .
 ```
 
-In PowerShell, set `$env:GOOS = "js"` and `$env:GOARCH = "wasm"` before the build, then remove those environment variables afterward. This checks compatibility; the browser launcher and web controls are tracked separately in the web-version issue. There are currently no automated simulation tests; those are tracked in the testing issue.
+In PowerShell, set `$env:GOOS = "js"` and `$env:GOARCH = "wasm"` before the build, then remove those environment variables afterward. This checks compatibility; the browser launcher and web controls are tracked separately in the web-version issue. Deterministic simulation tests run without a display. See [testing and manual checks](docs/TESTING.md), [project specification](docs/PROJECT_SPEC.md), [coding standards](docs/CODING_STANDARDS.md), and [agent workflow](AGENTS.md).
+
+Board dimensions must be 1..4096 with at most 4,000,000 cells. Cell size must be positive and the initial viewport must fit within 8192 pixels in each dimension. Variance must be finite and in [0, 1]; speed must be 0..60. The historical tick scheduler makes speed approximate.
+
+Run the desktop app with `go run .`, or for example `go run . -width 100 -height 60 -cell 8 -variance 0.3`. Population and cells are initialized before the first step, including when paused.

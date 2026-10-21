@@ -42,3 +42,30 @@ jobs:
           go build -o build/game.wasm .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+  simulation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test simulation without a display
+        run: |
+          mkdir -p build
+          go test -race -count=1 -coverprofile=build/coverage.out ./internal/simulation
+          go tool cover -func=build/coverage.out | tee build/coverage.txt
+          go tool cover -html=build/coverage.out -o build/coverage.html
+          echo '### Simulation coverage' >> "$GITHUB_STEP_SUMMARY"
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          cat build/coverage.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: simulation-coverage
+          path: |
+            build/coverage.out
+            build/coverage.txt
+            build/coverage.html
+          if-no-files-found: error
+          retention-days: 14
