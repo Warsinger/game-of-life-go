@@ -8,4 +8,4 @@ Validate user configuration before allocating large buffers or loading assets. R
 
 Tests should assert observable rules and known trajectories, including boundaries and error cases, rather than copying the production implementation. Add regression tests when fixing a bug. Coverage indicates exercised statements, not graphical correctness.
 
-Keep assets embedded and retain their attribution. Never commit generated binaries, local helper copies, secrets or temporary output. Pin GitHub Actions to full commit SHAs with version comments and least-privilege permissions.
+Keep assets embedded and retain their attribution. Never commit generated binaries, local helper copies, secrets or temporary output. Use major-version tags for GitHub Actions (for example actions/checkout@v7, actions/setup-go@v7 and actions/upload-artifact@v7), rather than commit SHAs. Keep workflow permissions at the minimum required.

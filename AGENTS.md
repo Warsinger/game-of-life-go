@@ -13,6 +13,7 @@ Use Warsinger Code Builder for all GitHub interactions, not connected GitHub too
 
 # Development
 
+- Use major-version tags for GitHub Actions (for example actions/checkout@v7 and actions/setup-go@v7), rather than commit SHAs, per the owner preference.
 - Target the Go version in go.mod; run gofmt, relevant tests, vet and native/Wasm builds.
 - Keep internal/simulation independent of Ebitengine, input, file I/O and graphics/audio initialization. Inject randomness where needed.
 - Keep scratch files, compatibility helpers, coverage and binaries under ignored build/.
