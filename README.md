@@ -27,3 +27,24 @@ Conway's Game of Life written in Golang for fun and learning
   * Grid Size (default 0.5)
 * -width int
   * Board width in cells (default 80)
+## Build and dependency verification
+
+Requires Go 1.27.3 or newer. Go's automatic toolchain selection can download the version declared in `go.mod`.
+
+```sh
+go mod download
+go mod verify
+go vet ./...
+go test ./...
+go build -o build/game .
+```
+
+Ebitengine's native Linux build requires its graphics development libraries and a display to run. See the [Ebitengine installation guide](https://ebitengine.org/en/documents/install.html).
+
+A WebAssembly compilation check is also available:
+
+```sh
+GOOS=js GOARCH=wasm go build -o build/game.wasm .
+```
+
+In PowerShell, set `$env:GOOS = "js"` and `$env:GOARCH = "wasm"` before the build, then remove those environment variables afterward. This checks compatibility; the browser launcher and web controls are tracked separately in the web-version issue. There are currently no automated simulation tests; those are tracked in the testing issue.
