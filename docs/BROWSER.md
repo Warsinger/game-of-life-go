@@ -9,6 +9,7 @@ The game canvas receives focus after its first actual Go update. Use Focus game 
 Run from the repository root:
 
 ```sh
+npm ci --ignore-scripts
 go run ./cmd/web -serve -port 8080
 ```
 
@@ -27,3 +28,9 @@ The local loader accepts raw Wasm. The Pages packager generates gzip Wasm and th
 Run node --test scripts/*.test.mjs plus the Go checks in TESTING.md. JavaScript tests cover option conversion/limits, real HTML/runtime references, reproducible hashed assets, gzip byte integrity, asset limits, immutable caching, loader success/failure and input message trust/release behavior. Coverage of actual rendering remains a browser check.
 
 Manually verified in the in-app Chromium browser: automatic startup, keyboard focus, random evolution, rejected oversized allocation, restart and a paused one-pixel all-live board. Review preview deployment on other browsers and real touch devices before claiming a full support matrix.
+
+## Shared browser package
+
+Node 24+ installs the exact integrity-locked Warsinger/web-shared commit before browser builds: npm ci --ignore-scripts. Native builds remain independent of npm. The builder copies the required shared modules/styles into build/web/shared/ and keeps wasm_exec.js from its own compiling Go toolchain. Pages hashes these files with the app, so every deployment is self-contained and makes no cross-site runtime requests. Update shared code through a reviewed dependency/lockfile change and verify a preview.
+
+Life keeps its random immediate startup, settings conversion/validation and Conway simulation. The shared settings launcher handles restart, canvas focus, fullscreen, trusted current-session messages and status. Footer HTML/links remain local; one shared footer stylesheet supports each layout. Common lifecycle/Go-loader tests are in web-shared. Consumer tests check options where applicable and real packaged references, icons, gzip and shared-style invalidation.

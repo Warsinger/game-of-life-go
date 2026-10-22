@@ -32,3 +32,5 @@ Issue #1 tracks the browser launcher, web controls for all command-line options,
 ## Web implementation
 
 The browser version uses the same simulation and drawing code with platform-specific query arguments, ready reporting and fixed logical board dimensions. The page launches immediately. All desktop flag values are exposed in validated settings; restart creates a fresh isolated iframe runtime. Rendering scales to the page while preserving the logical configuration. Browser Q is ignored. See BROWSER.md and DEPLOYMENT.md for implemented hosting and loader details; production verification and landing-page publication complete issue #1.
+
+The browser shell uses a pinned, locally bundled Warsinger/web-shared revision. App-specific content, settings/controls and simulation/storage stay in this repository; native behavior is unchanged. See BROWSER.md for installation and update steps.
