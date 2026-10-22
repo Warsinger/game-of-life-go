@@ -6,13 +6,13 @@ import { pathToFileURL } from 'node:url';
 
 export function packagePages(source, destination, revision = 'local') {
   const iconNames = ['favicon.ico','icon-180.png','icon-192.png','icon-512.png'];
-  const names = [...iconNames,'game.html','launcher.js','options.mjs','game.js','styles.css','wasm_exec.js','game.wasm'];
+  const names = [...iconNames,'game.html','launcher.js','options.mjs','game.js','styles.css','shared/launcher.mjs','shared/frame.mjs','shared/status.mjs','shared/go-runtime.mjs','shared/shell.css','shared/footer.css','wasm_exec.js','game.wasm'];
   const files = new Map(names.map(name => [name, fs.readFileSync(path.join(source,name))]));
   files.set('game.wasm.gz',gzipSync(files.get('game.wasm'),{level:9}));
   files.delete('game.wasm');
   const loader = files.get('game.js').toString();
-  if (!loader.includes('fetch("game.wasm")')) throw new Error('Wasm fetch reference missing');
-  files.set('game.js',Buffer.from(loader.replace('fetch("game.wasm")','fetch("game.wasm.gz")')));
+  if (!loader.includes("new URL('game.wasm', import.meta.url)")) throw new Error('Wasm fetch reference missing');
+  files.set('game.js',Buffer.from(loader.replace("new URL('game.wasm', import.meta.url)","new URL('game.wasm.gz', import.meta.url)")));
   const digest = crypto.createHash('sha256');
   for (const [name,content] of files) {
     if (content.length > 25 * 1024 * 1024) throw new Error(name + ' exceeds the Pages 25 MiB asset limit');
@@ -28,7 +28,10 @@ export function packagePages(source, destination, revision = 'local') {
   fs.mkdirSync(destination,{recursive:false});
   const assets = path.join(destination,'assets',hash);
   fs.mkdirSync(assets,{recursive:true});
-  for (const [name,content] of files) fs.writeFileSync(path.join(assets,name),content);
+  for (const [name,content] of files) {
+    fs.mkdirSync(path.dirname(path.join(assets,name)),{recursive:true});
+    fs.writeFileSync(path.join(assets,name),content);
+  }
   fs.writeFileSync(path.join(destination,'index.html'),index);
   // Conventional browser fallback; declared icon URLs remain content-versioned.
   fs.writeFileSync(path.join(destination,'favicon.ico'),files.get('favicon.ico'));

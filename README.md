@@ -61,3 +61,5 @@ Run the desktop app with `go run .`, or for example `go run . -width 100 -height
 Run `go run ./cmd/web -serve -port 8080` and open [localhost:8080](http://localhost:8080/). The game starts immediately; every command-line setting is also available on the page. Apply / restart creates a fresh run. The default board starts evolving randomly.
 
 The deployment target is [golgo.pages.dev](https://golgo.pages.dev/). See [browser behavior](docs/BROWSER.md) and [deployment/preview instructions](docs/DEPLOYMENT.md). See [application icons](docs/ICONS.md) for artwork, regeneration and desktop support.
+
+Browser builds now require Node 24+ and `npm ci --ignore-scripts` before the existing Go web command. Shared styling and browser lifecycle come from the exact locked [web-shared](https://github.com/Warsinger/web-shared) revision; native builds and game rules are unchanged.

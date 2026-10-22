@@ -45,3 +45,5 @@ Run go run .; confirm random cells and population are visible immediately; try -
 ## Browser checks
 
 Run `node --test scripts/*.test.mjs`, `go run ./cmd/web`, and `node scripts/package-pages.mjs <fresh-output-directory>`. CI uploads the complete Pages artifact after these pass. See BROWSER.md for the actual Chromium checks performed and remaining browser/touch coverage limits. Verify settings after restart, initial focus, graceful failed loading, gzip bundle startup, and that the preview URL appears on the PR and in the workflow summary.
+
+Install browser assets with `npm ci --ignore-scripts` before browser tests/builds. Shared loader/status/frame behavior tests live in web-shared; this repo tests its own packaged references and options/storage where applicable.
