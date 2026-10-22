@@ -34,6 +34,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           go mod tidy -diff
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify generated icons
+        run: |
+          go run ./cmd/icons
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          go run github.com/akavel/rsrc@v0.10.2 -arch amd64 -ico assets/icons/favicon.ico -o resource_windows_amd64.syso
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --exit-code -- assets/icons resource_windows_amd64.syso
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Check native application
         run: |
           go vet ./...

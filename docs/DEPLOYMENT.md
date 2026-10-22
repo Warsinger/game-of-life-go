@@ -21,4 +21,4 @@ Choose a fresh output directory for each packaging run. The packager never delet
 
 ## Recovery and follow-up
 
-For a code regression, revert the bad commit on main and let the guarded workflow publish the new main revision. Cloudflare dashboard rollback can restore an earlier upload for an urgent visual check, but keep repository history aligned with the intended release; later main pushes publish the latest main again. After a successful production deployment, verify startup/settings/controls and version.json, then merge the companion landing-page catalog update. Icon artwork is tracked separately in issue #8.
+For a code regression, revert the bad commit on main and let the guarded workflow publish the new main revision. Cloudflare dashboard rollback can restore an earlier upload for an urgent visual check, but keep repository history aligned with the intended release; later main pushes publish the latest main again. After a successful production deployment, verify startup/settings/controls and version.json, then merge the companion landing-page catalog update. Application icon sources and platform support are documented in ICONS.md.

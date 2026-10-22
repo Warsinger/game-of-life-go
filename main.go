@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"game-of-life/assets/icons"
 	"game-of-life/internal/platform"
 	"game-of-life/internal/simulation"
 	"image/color"
@@ -111,6 +112,11 @@ func (g *GameInfo) Init() error {
 }
 
 func main() {
+	windowIcons, err := icons.Images()
+	if err != nil {
+		log.Fatal(err)
+	}
+	ebiten.SetWindowIcon(windowIcons)
 	width := flag.Int("width", 80, "Board width in cells")
 	height := flag.Int("height", 80, "Board height in cells")
 	cellSize := flag.Int("cell", 10, "Size of each cell in pixels")
