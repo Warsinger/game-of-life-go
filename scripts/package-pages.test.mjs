@@ -10,6 +10,7 @@ function fixture(t) {
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const source=path.join(root,'source');fs.mkdirSync(source);
  for(const file of ['index.html','game.html','launcher.js','options.mjs','game.js','styles.css']) fs.copyFileSync(new URL('../web/'+file,import.meta.url),path.join(source,file));
+ for(const name of ['favicon.ico','icon-180.png','icon-192.png','icon-512.png']) fs.copyFileSync(new URL('../assets/icons/'+name,import.meta.url),path.join(source,name));
  fs.writeFileSync(path.join(source,'wasm_exec.js'),'// matching Go runtime');
  fs.writeFileSync(path.join(source,'game.wasm'),Buffer.from([0,97,115,109,1,0,0,0]));
  return {root,source};
@@ -40,4 +41,18 @@ test('refuses missing references and overlarge assets before creating output',t=
  fs.copyFileSync(new URL('../web/game.js',import.meta.url),path.join(source,'game.js'));
  fs.writeFileSync(path.join(source,'wasm_exec.js'),Buffer.alloc(25*1024*1024+1));
  assert.throws(()=>packagePages(source,path.join(root,'large')),/25 MiB/);
+});
+
+test('icons resolve from both entry points and change the immutable asset hash',t=>{
+ const {root,source}=fixture(t);
+ const a=packagePages(source,path.join(root,'before'));
+ const assets=path.join(root,'before','assets',a);
+ for(const [file,base] of [['index.html',path.join(root,'before')],['game.html',assets]]) {
+  for(const match of fs.readFileSync(path.join(base,file),'utf8').matchAll(/<link[^>]+href="([^"]+)"/g)) {
+   assert.ok(fs.existsSync(path.join(base,match[1])),file+' missing '+match[1]);
+  }
+ }
+ assert.deepEqual(fs.readFileSync(path.join(root,'before','favicon.ico')),fs.readFileSync(path.join(source,'favicon.ico')));
+ fs.appendFileSync(path.join(source,'icon-192.png'),Buffer.from([1]));
+ assert.notEqual(packagePages(source,path.join(root,'after')),a);
 });
