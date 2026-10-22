@@ -25,7 +25,7 @@ test('packages actual HTML/module references, gzip bytes, revision and cache pol
  for(const file of ['styles.css','launcher.js','game.html']) assert.ok(index.includes('assets/'+hash+'/'+file));
  for(const match of fs.readFileSync(path.join(assets,'game.html'),'utf8').matchAll(/src="([^"]+)"/g)) assert.ok(fs.existsSync(path.join(assets,match[1])));
  assert.ok(fs.readFileSync(path.join(assets,'launcher.js'),'utf8').includes("'./options.mjs'"));
- for (const file of ['launcher.mjs','frame.mjs','status.mjs','go-runtime.mjs','shell.css','footer.css']) assert.ok(fs.existsSync(path.join(assets,'shared',file)));
+ for (const file of ['launcher.mjs','frame.mjs','status.mjs','go-runtime.mjs','shell.css','header.css','footer.css']) assert.ok(fs.existsSync(path.join(assets,'shared',file)));
  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output,'version.json'))),{revision:'abcdef',assets:'assets/'+hash});
  const headers=fs.readFileSync(path.join(output,'_headers'),'utf8');assert.match(headers,/no-cache/);assert.match(headers,/immutable/);assert.match(headers,/application\/gzip/);
  assert.ok(fs.existsSync(path.join(output,'404.html')));

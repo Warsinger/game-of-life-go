@@ -45,7 +45,7 @@ func build() error {
 	if err := os.MkdirAll("build/web/shared", 0755); err != nil {
 		return err
 	}
-	for _, name := range []string{"launcher.mjs", "frame.mjs", "status.mjs", "go-runtime.mjs", "shell.css", "footer.css"} {
+	for _, name := range []string{"launcher.mjs", "frame.mjs", "status.mjs", "go-runtime.mjs", "shell.css", "header.css", "footer.css"} {
 		if err := copyFile(filepath.Join(shared, name), filepath.Join("build/web/shared", name)); err != nil {
 			return err
 		}
