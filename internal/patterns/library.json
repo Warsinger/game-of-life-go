@@ -1,0 +1,8 @@
+[
+ {"id":"block","name":"Block","description":"A compact still life.","grid":"OO\nOO"},
+ {"id":"blinker","name":"Blinker","description":"A small two-phase oscillator.","grid":"OOO"},
+ {"id":"beacon","name":"Beacon","description":"Two blocks forming an oscillator.","grid":"OO..\nOO..\n..OO\n..OO"},
+ {"id":"glider","name":"Glider","description":"A diagonal travelling pattern.","grid":".O.\n..O\nOOO"},
+ {"id":"r-pentomino","name":"R-pentomino","description":"Five cells that grow into a complex evolving pattern.","grid":".OO\nOO.\n.O."},
+ {"id":"lwss","name":"Lightweight spaceship","description":"A horizontal travelling pattern.","grid":".O..O\nO....\nO...O\nOOOO."}
+]

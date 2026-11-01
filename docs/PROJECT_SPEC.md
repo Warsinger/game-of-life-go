@@ -4,12 +4,14 @@
 
 A desktop and browser Conway's Game of Life sandbox written in Go/Ebitengine. A finite rectangular board has no edge wrapping: neighbors outside the board are dead. Live cells survive with two or three neighbors; dead cells are born with exactly three. All changes occur simultaneously.
 
-Initialization and R restart generate an independent random board using the configured live-cell probability. Generation starts at zero; population and green RGBA pixels match the initial cells immediately. Restart resets tick timing. There is no persistence, multiplayer or editing interface.
+Random mode is the immediate-start default; initialization and R restart generate an independent board using the configured live-cell probability. Named/custom modes instead center a deterministic starting grid on dead cells, and R restores that selection. Generation starts at zero; population and RGBA pixels are coherent immediately, and restart resets tick timing. The browser offers a plain-text grid editor and an explicitly saved local library of starting patterns, not running-state persistence. There is no multiplayer.
 
 ## Architecture
 
 - main.go: command-line options, Ebitengine lifecycle, keyboard input and drawing.
 - internal/simulation: validated configuration, random initialization, double-buffered rules, generation/population statistics, RGBA pixels, reset and tick scheduling.
+- internal/patterns: shared embedded pattern catalog, bounded rectangular text parsing and centered placement; no graphics/file I/O. Native file reading stays in main.
+- web/patterns.mjs and pattern-ui.mjs: app-specific validation/editor/local saved library; shared shell/lifecycle remain unchanged.
 - docs/: specification, coding and testing guidance.
 - .github/workflows/build.yml: native/Wasm verification and headless simulation coverage.
 
