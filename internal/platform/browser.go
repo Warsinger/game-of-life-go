@@ -8,7 +8,7 @@ func Browser() bool { return true }
 func Args() []string {
 	params := js.Global().Get("URLSearchParams").New(js.Global().Get("location").Get("search"))
 	args := []string{}
-	for _, name := range []string{"width", "height", "cell", "speed", "variance", "debug", "lines"} {
+	for _, name := range []string{"width", "height", "cell", "speed", "variance", "debug", "lines", "pattern", "seed"} {
 		if params.Call("has", name).Bool() {
 			args = append(args, "-"+name+"="+params.Call("get", name).String())
 		}

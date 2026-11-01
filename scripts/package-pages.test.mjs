@@ -9,7 +9,8 @@ function fixture(t) {
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'game-pages-test-'));
  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const source=path.join(root,'source');fs.mkdirSync(source);
- for(const file of ['index.html','game.html','launcher.js','options.mjs','game.js','styles.css']) fs.copyFileSync(new URL('../web/'+file,import.meta.url),path.join(source,file));
+ for(const file of ['index.html','game.html','launcher.js','options.mjs','patterns.mjs','pattern-ui.mjs','game.js','styles.css']) fs.copyFileSync(new URL('../web/'+file,import.meta.url),path.join(source,file));
+ fs.copyFileSync(new URL('../internal/patterns/library.json',import.meta.url),path.join(source,'patterns.json'));
  fs.cpSync(new URL('../node_modules/@warsinger/web-shared/browser',import.meta.url),path.join(source,'shared'),{recursive:true});
  for(const name of ['favicon.ico','icon-180.png','icon-192.png','icon-512.png']) fs.copyFileSync(new URL('../assets/icons/'+name,import.meta.url),path.join(source,name));
  fs.writeFileSync(path.join(source,'wasm_exec.js'),'// matching Go runtime');
@@ -27,6 +28,8 @@ test('packages actual HTML/module references, gzip bytes, revision and cache pol
  assert.ok(fs.readFileSync(path.join(assets,'launcher.js'),'utf8').includes("'./options.mjs'"));
  for (const file of ['launcher.mjs','frame.mjs','status.mjs','go-runtime.mjs','shell.css','header.css','footer.css']) assert.ok(fs.existsSync(path.join(assets,'shared',file)));
  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(output,'version.json'))),{revision:'abcdef',assets:'assets/'+hash});
+ for(const file of ['patterns.mjs','pattern-ui.mjs','patterns.json']) assert.ok(fs.existsSync(path.join(assets,file)));
+ assert.deepEqual(JSON.parse(fs.readFileSync(path.join(assets,'patterns.json'))),JSON.parse(fs.readFileSync(new URL('../internal/patterns/library.json',import.meta.url))));
  const headers=fs.readFileSync(path.join(output,'_headers'),'utf8');assert.match(headers,/no-cache/);assert.match(headers,/immutable/);assert.match(headers,/application\/gzip/);
  assert.ok(fs.existsSync(path.join(output,'404.html')));
  assert.throws(()=>packagePages(source,output),/EEXIST/);
@@ -37,7 +40,8 @@ test('asset paths change when implementation changes and remain deterministic',t
  fs.appendFileSync(path.join(source,'options.mjs'),'\n// changed');
  const c=packagePages(source,path.join(root,'c'));assert.notEqual(c,a);
  fs.appendFileSync(path.join(source,'shared/shell.css'),'\n/* shared change */');
- assert.notEqual(packagePages(source,path.join(root,'d')),c);
+ const d=packagePages(source,path.join(root,'d'));assert.notEqual(d,c);
+ fs.appendFileSync(path.join(source,'patterns.json'),'\n');assert.notEqual(packagePages(source,path.join(root,'e')),d);
 });
 test('refuses missing references and overlarge assets before creating output',t=>{
  const {root,source}=fixture(t);fs.writeFileSync(path.join(source,'game.js'),'bad loader');

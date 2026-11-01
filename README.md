@@ -10,7 +10,7 @@ Conway's Game of Life written in Golang for fun and learning
 ## Controls
 * Equals/plus or minus to adjust nominal game speed (0 pauses)
 * D toggle debug information
-* R restart with a new random board
+* R restore the selected starting grid, or create a new board in Random mode
 * L toggle grid lines (except in the one-pixel fast path)
 * F toggle fullscreen
 * Q quit
@@ -30,6 +30,52 @@ Conway's Game of Life written in Golang for fun and learning
   * Initial live-cell probability from 0 to 1 (default 0.5)
 * -width int
   * Board width in cells (default 80)
+* -pattern string
+  * random (default), block, blinker, beacon, glider, r-pentomino, lwss, or custom
+* -seed string
+  * Newline-separated . / O rows for -pattern custom
+* -pattern-file string
+  * Native only: read a custom starting grid from a local text file
+
+## Starting patterns
+
+Choose a built-in pattern or edit a rectangular grid using `O` for live cells
+and `.` for dead cells. Patterns are centered on an otherwise empty board;
+they must fit without clipping. Custom grids allow 1–64 rows/columns (8192-byte
+input limit). Outer whitespace and CRLF line endings are accepted; internal
+spaces, ragged/blank rows and other symbols are rejected. An all-dead grid is valid.
+
+```sh
+go run . -pattern glider -width 40 -height 30 -cell 16 -speed 0
+go run . -pattern-file starting-grid.txt -speed 0
+```
+
+For example, starting-grid.txt can contain:
+
+```text
+.O.
+..O
+OOO
+```
+
+Use `-pattern-file` by itself, without another pattern/seed selection. Files are
+read once on launch; R restores that loaded grid, while relaunching rereads the
+file. Random mode remains the default, and variance applies only in Random mode.
+
+In the browser, select a preset and edit its grid to make a custom one. **Load
+paused** sets speed to zero so you can inspect generation 0; use + in the game
+or set a nonzero speed and Apply to start evolution. **My saved patterns** stores
+up to 20 named starting grids in this browser, with a session-only fallback when
+storage is blocked/full. Reusing a name replaces that saved pattern. Load brings
+it into the editor; Apply / restart or Load paused starts it. Saved grids are
+portable shapes, not a history of the running simulation, and are not synced
+between devices. Page reload still starts a fresh random board; your named library
+remains available. No account, backend or cloud storage is used.
+
+See [starting-pattern screenshot](docs/starting-patterns.jpg). The built-ins are
+standard Conway patterns: block, blinker, beacon, glider, R-pentomino and lightweight
+spaceship; see [LifeWiki](https://conwaylife.com/wiki/Category:Patterns) for background.
+
 ## Build and dependency verification
 
 Requires Go 1.27.3 or newer. Go's automatic toolchain selection can download the version declared in `go.mod`.
@@ -58,7 +104,7 @@ Run the desktop app with `go run .`, or for example `go run . -width 100 -height
 
 ## Browser version
 
-Run `go run ./cmd/web -serve -port 8080` and open [localhost:8080](http://localhost:8080/). The game starts immediately; every command-line setting is also available on the page. Apply / restart creates a fresh run. The default board starts evolving randomly.
+Run `go run ./cmd/web -serve -port 8080` and open [localhost:8080](http://localhost:8080/). The game starts immediately; simulation settings and the starting-grid editor are available on the page (local pattern-file input is native only). Apply / restart creates a fresh run. The default board starts evolving randomly.
 
 The deployment target is [golgo.pages.dev](https://golgo.pages.dev/). See [browser behavior](docs/BROWSER.md) and [deployment/preview instructions](docs/DEPLOYMENT.md). See [application icons](docs/ICONS.md) for artwork, regeneration and desktop support.
 

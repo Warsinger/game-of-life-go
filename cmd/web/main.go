@@ -70,7 +70,7 @@ func build() error {
 	if err := copyFile(runtime, "build/web/wasm_exec.js"); err != nil {
 		return err
 	}
-	for _, name := range []string{"index.html", "launcher.js", "game.html", "game.js", "styles.css", "options.mjs"} {
+	for _, name := range []string{"index.html", "launcher.js", "game.html", "game.js", "styles.css", "options.mjs", "patterns.mjs", "pattern-ui.mjs"} {
 		if err := copyFile(filepath.Join("web", name), filepath.Join("build/web", name)); err != nil {
 			return err
 		}
@@ -79,6 +79,9 @@ func build() error {
 		if err := copyFile(filepath.Join("assets/icons", name), filepath.Join("build/web", name)); err != nil {
 			return err
 		}
+	}
+	if err := copyFile("internal/patterns/library.json", "build/web/patterns.json"); err != nil {
+		return err
 	}
 	return nil
 }

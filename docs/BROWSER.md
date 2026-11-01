@@ -1,6 +1,6 @@
 # Browser application
 
-The page starts immediately with the same defaults as the desktop app and a random board. There is no start screen. All command-line options have labeled web controls. Apply / restart validates the settings and creates a fresh iframe/game instance; R randomizes in place. Board dimensions are fixed for each run.
+The page starts immediately with the same defaults as the desktop app and a random board. There is no start screen. Simulation settings have labeled web controls. Choose Random, one of six built-in patterns, or a custom . / O grid; native pattern-file input has the text editor as its browser equivalent. Apply / restart validates the settings and creates a fresh iframe/game instance; R restores the selected starting grid (or randomizes in Random mode). Board dimensions are fixed for each run.
 
 The game canvas receives focus after its first actual Go update. Use Focus game after interacting with settings, or click the game. Browser Q is ignored; desktop Q still exits. Fullscreen is available from the page button or the game F key when supported by the browser. Grid lines retain the desktop limitation in the one-pixel fast path.
 
@@ -15,7 +15,7 @@ go run ./cmd/web -serve -port 8080
 
 Open http://localhost:8080/. Without -serve, the command writes build/web and exits. Serve over HTTP rather than opening HTML as a local file. The builder copies wasm_exec.js from the exact Go toolchain that compiled the binary. It replaces inherited GOOS/GOARCH values for the Wasm subprocess without changing the native caller.
 
-Settings are passed as allowlisted query arguments and validated both in JavaScript and by Go before game setup. They are not saved between visits. Browser rules and native simulation use the same Go implementation. No multiplayer, persistence, editing interface or new physics is added.
+Settings are passed as allowlisted query arguments and validated both in JavaScript and by Go before game setup. They are not saved between visits. Browser rules and native simulation use the same Go implementation. Conway rules and scheduling are unchanged. Named starting grids can be saved locally; running generations are not persisted.
 
 ## Loading and security boundaries
 
@@ -34,3 +34,27 @@ Manually verified in the in-app Chromium browser: automatic startup, keyboard fo
 Node 24+ installs the exact integrity-locked Warsinger/web-shared commit before browser builds: npm ci --ignore-scripts. Native builds remain independent of npm. The builder copies the required shared modules/styles into build/web/shared/ and keeps wasm_exec.js from its own compiling Go toolchain. Pages hashes these files with the app, so every deployment is self-contained and makes no cross-site runtime requests. Update shared code through a reviewed dependency/lockfile change and verify a preview.
 
 Life keeps its random immediate startup, settings conversion/validation and Conway simulation. The shared settings launcher handles restart, canvas focus, fullscreen, trusted current-session messages and status. Footer HTML/links remain local; one shared footer stylesheet supports each layout. Common lifecycle/Go-loader tests are in web-shared. Consumer tests check options where applicable and real packaged references, icons, gzip and shared-style invalidation.
+
+## Starting-grid library
+
+The same internal/patterns/library.json supplies native embedded patterns and the
+versioned browser patterns.json resource. Default Random startup does not wait for
+the optional catalog fetch; a five-second fetch failure leaves Random/custom usable.
+All module/data assets participate in the Pages hash. JavaScript and Go validate
+rectangular . / O rows, byte/side bounds and board fit before replacing a game.
+Custom rows are encoded as an allowlisted iframe query argument; native file paths
+are never accepted from the browser. Placement is centered and never clipped.
+
+Load paused sets speed to 0 and starts generation 0; + / − retain their existing
+semantics. Editing a preset changes its mode to Custom. Save/Load/Delete operate on
+named starting grids only (20 entries, names 1–40 characters), using localStorage
+key golgo.starting-patterns.v1 with an in-memory fallback on storage failures.
+Malformed/oversized stored data is ignored with feedback. Names are inserted as
+text, not HTML. Settings and the current generation are not restored on reload.
+
+Chromium verification: immediate random startup, paused centered glider at generation
+0/population 5, resume with + and restore with R, custom block saved/reloaded/loaded,
+invalid ragged grid rejection preserving the active iframe, and a 320-pixel layout
+without horizontal overflow. The temporary saved test pattern was deleted after
+verification. Storage denial/quota/corruption paths have automated tests; other
+browsers, real touch devices and native interactive rendering were not checked.

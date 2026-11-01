@@ -4,11 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"game-of-life/assets/icons"
+	"game-of-life/internal/patterns"
 	"game-of-life/internal/platform"
 	"game-of-life/internal/simulation"
 	"image/color"
+	"io"
 	"log"
 	"math/rand"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -21,6 +24,7 @@ type GameInfo struct {
 	width, height, cellSize, speed int
 	variance                       float64
 	debug, lines                   bool
+	pattern, seed                  string
 }
 
 var cellColor = color.RGBA{0, 255, 0, 255}
@@ -103,7 +107,23 @@ func (g *GameInfo) Init() error {
 	if err := config.Validate(); err != nil {
 		return err
 	}
-	board, err := simulation.New(g.width, g.height, g.variance, rand.Float64)
+	var board *simulation.Board
+	var err error
+	if g.pattern == "" || g.pattern == "random" {
+		if g.seed != "" {
+			return fmt.Errorf("custom grid requires -pattern custom")
+		}
+		board, err = simulation.New(g.width, g.height, g.variance, rand.Float64)
+	} else {
+		cells, patternErr := patterns.Cells(g.width, g.height, g.pattern, g.seed)
+		if patternErr != nil {
+			return patternErr
+		}
+		board, err = simulation.New(g.width, g.height, 0, func() float64 { return 1 })
+		if err == nil {
+			err = board.Reset(cells)
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -124,12 +144,25 @@ func main() {
 	variance := flag.Float64("variance", 0.5, "Initial live-cell probability, from 0 to 1")
 	debug := flag.Bool("debug", false, "Show debug info, D to toggle in game")
 	lines := flag.Bool("lines", false, "Draw grid lines, L to toggle in game")
+	pattern := flag.String("pattern", "random", "Starting pattern: random, block, blinker, beacon, glider, r-pentomino, lwss or custom")
+	seed := flag.String("seed", "", "Custom rectangular grid: O alive, . dead, newline-separated rows (max 64x64)")
+	patternFile := flag.String("pattern-file", "", "Read a custom starting grid from a local text file")
 
 	if err := flag.CommandLine.Parse(platform.Args()); err != nil {
 		log.Fatal(err)
 	}
 
-	g := &GameInfo{width: *width, height: *height, cellSize: *cellSize, variance: *variance, debug: *debug, lines: *lines, speed: *speed}
+	if *patternFile != "" {
+		if platform.Browser() || *pattern != "random" || *seed != "" {
+			log.Fatal("-pattern-file is native only and cannot be combined with -pattern or -seed")
+		}
+		data, err := readPatternFile(*patternFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		*pattern, *seed = "custom", data
+	}
+	g := &GameInfo{pattern: *pattern, seed: *seed, width: *width, height: *height, cellSize: *cellSize, variance: *variance, debug: *debug, lines: *lines, speed: *speed}
 	if err := g.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -140,4 +173,21 @@ func main() {
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// readPatternFile bounds input before parsing or allocating a simulation board.
+func readPatternFile(name string) (string, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return "", fmt.Errorf("starting pattern file: %w", err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, patterns.MaxTextBytes+1))
+	if err != nil {
+		return "", fmt.Errorf("starting pattern file: %w", err)
+	}
+	if len(data) > patterns.MaxTextBytes {
+		return "", fmt.Errorf("starting pattern file exceeds %d bytes", patterns.MaxTextBytes)
+	}
+	return string(data), nil
 }

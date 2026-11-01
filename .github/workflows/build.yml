@@ -66,10 +66,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Test simulation without a display
+      - name: Test simulation and patterns without a display
         run: |
           mkdir -p build
-          go test -race -count=1 -coverprofile=build/coverage.out ./internal/simulation
+          go test -race -count=1 -coverprofile=build/coverage.out ./internal/simulation ./internal/patterns
           go tool cover -func=build/coverage.out | tee build/coverage.txt
           go tool cover -html=build/coverage.out -o build/coverage.html
           echo '### Simulation coverage' >> "$GITHUB_STEP_SUMMARY"
